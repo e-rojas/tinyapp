@@ -11,6 +11,12 @@ app.get('/urls',(request,response)=>{
     let templateVaars = {urls:urlDatabase}
     response.render('urls_index',templateVaars)
 })
+app.get('/urls/:shortURL',(request,response)=>{
+    console.log(request.params.shortURL)
+let templateVars = {shortURL: request.params.shortURL, longURL:urlDatabase[request.params.shortURL]}
+console.log(templateVars)
+response.render('urls_show',templateVars)
+})
 
 
 app.listen(PORT,()=>{
