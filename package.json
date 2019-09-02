@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/javascript01fan/tinyapp#readme",
   "dependencies": {
+    "ejs": "^2.7.1",
     "express": "^4.17.1"
   }
 }
