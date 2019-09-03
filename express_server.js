@@ -29,6 +29,13 @@ app.post("/urls", (req, res) => {
   console.log(req.body.longURL); //// Log the POST req body to the console
   res.send("OK"); // Respond with 'Ok' (we will replace this)
 });
+//Updating short urls
+app.post('/urls/:id',(req,res)=>{
+  urlDatabase[req.params.id] = req.body.longURL
+  res.redirect('/urls')
+console.log(req.body)
+console.log(req.params)
+})
 //Deleting short urls
 app.post('/urls/:shortURL/delete',(req,res)=>{
 delete urlDatabase[req.params.shortURL]
@@ -37,7 +44,7 @@ res.redirect('/urls')
 const generateRandomString = ()=>{
    return Math.random().toString(36).substring(7)
 }
-console.log(generateRandomString())
+// console.log(generateRandomString())
 
 app.listen(PORT, () => {
   console.log(`Listening on port:${PORT}`);
