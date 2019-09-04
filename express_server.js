@@ -1,6 +1,11 @@
 const express = require("express");
 const app = express();
+const cookieParser = require('cookie-parser')
+
 const PORT = 4000; //default port
+
+app.use(cookieParser())
+
 app.set("view engine", "ejs");
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
@@ -10,7 +15,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get("/urls", (req, res) => {
-  let templateVaars = { urls: urlDatabase };
+  let templateVaars = { urls: urlDatabase , username: req.cookies["username"] };
   res.render("urls_index", templateVaars);
 });
 app.get("/urls/new", (req, res) => {
@@ -33,14 +38,24 @@ app.post("/urls", (req, res) => {
 app.post('/urls/:id',(req,res)=>{
   urlDatabase[req.params.id] = req.body.longURL
   res.redirect('/urls')
-console.log(req.body)
-console.log(req.params)
 })
 //Deleting short urls
 app.post('/urls/:shortURL/delete',(req,res)=>{
 delete urlDatabase[req.params.shortURL]
 res.redirect('/urls')
 })
+//User Login 
+app.post('/login',(req,res)=>{
+  res.cookie('username', req.body.username)
+res.redirect('/urls')
+  console.log('Username:',req.body.username)
+  console.log('Cookies: ', req.cookies)
+});
+app.post('/logout',(req,res)=>{
+  res.clearCookie(req.body.username)
+  res.redirect('/urls')
+});
+
 const generateRandomString = ()=>{
    return Math.random().toString(36).substring(7)
 }
@@ -49,3 +64,4 @@ const generateRandomString = ()=>{
 app.listen(PORT, () => {
   console.log(`Listening on port:${PORT}`);
 });
+
