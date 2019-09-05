@@ -5,82 +5,28 @@ const cookieParser = require("cookie-parser");
 const uuid = require("uuid/v4");
 const cookieSession = require("cookie-session");
 const PORT = 4000; //default port
-
-app.use(cookieParser());
-//Functions
-//Adduser to DB
-const addUser = (email, password) => {
-  //create arandom user ID
-  const userID = uuid().substr(0, 8);
-  //Create an object of the user
-  const newUser = {
-    id: userID,
-    email,
-    password
-  };
-  //add new user to the userDB
-  usersDB[userID] = newUser;
-
-  return userID;
-};
-//USER AUTHENTICATION
-const authenticateUser = (email, password) => {
-  // Check if the user exist
-  const user = findUser(email);
-
-  // check if the passwords match
-  console.log('user',user);
-  console.log('password',password);
-  if (user && bcrypt.compareSync(password, user.password)) {
-    return user;
-  } else {
-    return false;
-  }
-};
-//FIND USER
-const findUser = email => {
-  return Object.values(usersDB).find(user => user.email === email);
-};
-//-----------
-
+const { addUser, usersDB, authenticateUser, filterUser } = require("./helpers");
 app.set("view engine", "ejs");
-//Database
-const usersDB = {
- /*  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur"
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "tammy@gmail.com",
-    password: "1234"
-  },
-  ed123: {
-    id: "ed123",
-    email: "tony@gmail.com",
-    password: "1234"
-  } */
-  //------------
-};
-const filterUser = (userID,database)=>{
-  const userLinks = {}
-  for (const key of Object.keys(database)) {
-    if(userID === database[key].userID){
-      userLinks[key] = database[key]
-    }
-  }
-  return userLinks
-}
+app.use(cookieParser());
+app.use(
+  cookieSession({
+    name: "session",
+    keys: [
+      "e1d50c4f-538a-4682-89f4-c002f10a59c8",
+      "2d310699-67d3-4b26-a3a4-1dbf2b67be5c"
+    ]
+  })
+);
+
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "ed94f936" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 //Login user
 app.get("/login", (req, res) => {
-  let templateVars = { user: usersDB[req.cookies.user_id] };
+  let templateVars = { user: usersDB[req.session.user_id] }; //  to read the value * req.session.user_id *
   res.render("login", templateVars);
 });
 //Authentica login user
@@ -88,8 +34,8 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = authenticateUser(email, password);
   if (user) {
-    res.cookie("user_id", user.id);
-    //req.session.user_id = user.id;
+    //res.cookie("user_id", user.id);
+    req.session.user_id = user.id;
     // redirect to /quotes
     res.redirect("/urls");
   } else {
@@ -97,15 +43,13 @@ app.post("/login", (req, res) => {
   }
 }); //logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  //res.clearCookie("user_id");
+  req.session = null;
   return res.status(200).redirect("/login");
-  //res.clearCookies("user_id");
-  //console.log('user cookie',req.cookies)
-  //res.redirect("/urls");
 });
 //Register new user
 app.get("/register", (req, res) => {
-  let templateVars = { user: usersDB[req.cookies.user_id] };
+  let templateVars = { user: usersDB[req.session.user_id] };
   res.render("register", templateVars);
 });
 
@@ -113,6 +57,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   //create const for email password
   const { email, password } = req.body;
+  console.log("email password", email, password);
   if (authenticateUser(email)) {
     res.status(403).send("Email already in database");
     console.log(email);
@@ -125,11 +70,9 @@ app.post("/register", (req, res) => {
 
     //user const with email and hashed password
     const user = addUser(email, hashedPassword);
-
-    //set the user to a cookie
-    res.cookie("user_id", user);
-
-    console.log(usersDB[user]);
+    console.log("user->", user);
+    req.session.user_id = user;
+    console.log("userDB ", usersDB);
     let templateVars = usersDB[user];
     res.redirect("urls");
   }
@@ -139,15 +82,18 @@ app.get("/users", (req, res) => {
   res.json(usersDB);
 });
 app.get("/urls", (req, res) => {
-  let templateVaars = { urls: filterUser(req.cookies.user_id,urlDatabase), user: usersDB[req.cookies.user_id] };
-  console.log(filterUser(req.cookies.user_id,urlDatabase))
-  
+  let templateVaars = {
+    urls: filterUser(req.session.user_id, urlDatabase),
+    user: usersDB[req.session.user_id]
+  };
+  console.log(filterUser(req.session.user_id, urlDatabase));
+
   res.render("urls_index", templateVaars);
 });
 app.get("/urls/new", (req, res) => {
-  let templateVaars = { urls: urlDatabase, user: usersDB[req.cookies.user_id] };
+  let templateVaars = { urls: urlDatabase, user: usersDB[req.session.user_id] };
 
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     res.redirect("/login");
   }
   res.render("urls_new", templateVaars);
@@ -157,20 +103,20 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    user: usersDB[req.cookies.user_id]
+    user: usersDB[req.session.user_id]
   };
   res.render("urls_show", templateVars);
 });
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString()
-  const userID = req.cookies.user_id
-  urlDatabase[shortURL] = {longURL:req.body.longURL,userID:userID}
+  const shortURL = generateRandomString();
+  const userID = req.session.user_id;
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: userID };
   //--------------------------------------------------------------------------------
   console.log(req.body);
-  
-   //// Log the POST req body to the console
-   // Respond with 'Ok' (we will replace this)
-   res.redirect("/urls");
+
+  //// Log the POST req body to the console
+  // Respond with 'Ok' (we will replace this)
+  res.redirect("/urls");
 });
 //Updating short urls
 app.post("/urls/:id", (req, res) => {
@@ -188,7 +134,6 @@ const generateRandomString = () => {
     .toString(36)
     .substring(7);
 };
-// console.log(generateRandomString())
 
 app.listen(PORT, () => {
   console.log(`Listening on port:${PORT}`);
