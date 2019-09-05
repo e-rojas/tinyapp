@@ -34,7 +34,9 @@ const authenticateUser = (email, password) => {
 const findUser = email => {
   return Object.values(usersDB).find(user => user.email === email);
 };
-
+const getUserByEmail = (email,db)=>{
+    return Object.values(db).find(user => user.email === email).id;
+}
 //Database find of user
 
 const filterUser = (userID, database) => {
@@ -52,5 +54,6 @@ module.exports = {
   authenticateUser,
   findUser,
   usersDB,
-  filterUser
+  filterUser,
+  getUserByEmail
 };

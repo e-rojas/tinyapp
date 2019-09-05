@@ -4,7 +4,7 @@
   "description": "tinyapp with express and node",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "start": "npx -L express_server.js"
   },
   "repository": {
@@ -25,5 +25,9 @@
     "ejs": "^2.7.1",
     "express": "^4.17.1",
     "uuid": "^3.3.3"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0"
   }
 }
