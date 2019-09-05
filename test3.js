@@ -63,33 +63,33 @@ const urlDatabase = {
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
 //Login user
-app.get("/login", (req, res) => {
-  let templateVars = { user: usersDB[req.cookies.user_id] };
-  res.render("login", templateVars);
-});
+app.get('/login',(req,res)=>{
+  let templateVars = {user: usersDB[req.cookies.user_id]}
+res.render('login',templateVars)
+})
 //Authentica login user
-app.post("/login", (req, res) => {
-  const user = authenticateUser(email, password);
+app.post('/login',(req,res)=>{
+  const user = authenticateUser(email,password)
   if (user) {
-    res.cookie("user_id", user.id);
+     res.cookie('user_id', user.id);
     //req.session.user_id = user.id;
     // redirect to /quotes
-    res.redirect("/urls");
+    res.redirect('/urls');
   } else {
-    res.status(403).send("Email cannot be found");
+    res.status(403).send('Email cannot be found');
   }
-}); //logout
+})//logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  return res.status(200).redirect("/login");
+  res.clearCookie('user_id');
+  return res.status(200).redirect('/login');
   //res.clearCookies("user_id");
   //console.log('user cookie',req.cookies)
   //res.redirect("/urls");
 });
 //Register new user
 app.get("/register", (req, res) => {
-  let templateVars = { user: usersDB[req.cookies.user_id] };
-  res.render("register", templateVars);
+  let templateVars = {user: usersDB[req.cookies.user_id]}
+  res.render("register",templateVars);
 });
 
 //Register POST handler
@@ -111,6 +111,7 @@ app.post("/register", (req, res) => {
 
     //set the user to a cookie
     res.cookie("user_id", user);
+    
 
     console.log(usersDB[user]);
     let templateVars = usersDB[user];
@@ -131,11 +132,11 @@ app.get("/urls", (req, res) => {
 });
 app.get("/urls/new", (req, res) => {
   let templateVaars = { urls: urlDatabase, user: usersDB[req.cookies.user_id] };
-
-  if (!req.cookies.user_id) {
-    res.redirect("/login");
+  
+  if(!req.cookies.user_id){
+    res.redirect('/login')
   }
-  res.render("urls_new", templateVaars);
+  res.render("urls_new",templateVaars);
 });
 app.get("/urls/:shortURL", (req, res) => {
   console.log(req.params.shortURL);
@@ -160,6 +161,14 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
+//User Login
+/* app.post("/login", (req, res) => {
+  res.cookie("username", req.body.username);
+  res.redirect("/urls");
+  console.log("Username:", req.body.username);
+  console.log("Cookies: ", req.cookies);
+}); */
+
 
 const generateRandomString = () => {
   return Math.random()
