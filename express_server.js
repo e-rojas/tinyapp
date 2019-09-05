@@ -29,6 +29,8 @@ const authenticateUser = (email, password) => {
   const user = findUser(email);
 
   // check if the passwords match
+  console.log('user',user);
+  console.log('password',password);
   if (user && bcrypt.compareSync(password, user.password)) {
     return user;
   } else {
@@ -44,7 +46,7 @@ const findUser = email => {
 app.set("view engine", "ejs");
 //Database
 const usersDB = {
-  userRandomID: {
+ /*  userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
     password: "purple-monkey-dinosaur"
@@ -53,12 +55,26 @@ const usersDB = {
     id: "user2RandomID",
     email: "tammy@gmail.com",
     password: "1234"
-  }
+  },
+  ed123: {
+    id: "ed123",
+    email: "tony@gmail.com",
+    password: "1234"
+  } */
   //------------
 };
+const filterUser = (userID,database)=>{
+  const userLinks = {}
+  for (const key of Object.keys(database)) {
+    if(userID === database[key].userID){
+      userLinks[key] = database[key]
+    }
+  }
+  return userLinks
+}
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "ed94f936" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
 };
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -69,6 +85,7 @@ app.get("/login", (req, res) => {
 });
 //Authentica login user
 app.post("/login", (req, res) => {
+  const { email, password } = req.body;
   const user = authenticateUser(email, password);
   if (user) {
     res.cookie("user_id", user.id);
@@ -122,11 +139,9 @@ app.get("/users", (req, res) => {
   res.json(usersDB);
 });
 app.get("/urls", (req, res) => {
-  let templateVaars = { urls: urlDatabase, user: usersDB[req.cookies.user_id] };
-  /* console.log(usersDB);
-  console.log(req.cookies);
-  console.log(usersDB[req.cookies]); */
-  // let templateVaars = { urls: urlDatabase, username: req.cookies["username"] };
+  let templateVaars = { urls: filterUser(req.cookies.user_id,urlDatabase), user: usersDB[req.cookies.user_id] };
+  console.log(filterUser(req.cookies.user_id,urlDatabase))
+  
   res.render("urls_index", templateVaars);
 });
 app.get("/urls/new", (req, res) => {
@@ -141,18 +156,25 @@ app.get("/urls/:shortURL", (req, res) => {
   console.log(req.params.shortURL);
   let templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]
+    longURL: urlDatabase[req.params.shortURL],
+    user: usersDB[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });
 app.post("/urls", (req, res) => {
-  urlDatabase[generateRandomString()] = req.body.longURL;
-  console.log(req.body.longURL); //// Log the POST req body to the console
-  res.send("OK"); // Respond with 'Ok' (we will replace this)
+  const shortURL = generateRandomString()
+  const userID = req.cookies.user_id
+  urlDatabase[shortURL] = {longURL:req.body.longURL,userID:userID}
+  //--------------------------------------------------------------------------------
+  console.log(req.body);
+  
+   //// Log the POST req body to the console
+   // Respond with 'Ok' (we will replace this)
+   res.redirect("/urls");
 });
 //Updating short urls
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 //Deleting short urls
