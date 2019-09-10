@@ -1,6 +1,7 @@
 const uuid = require("uuid/v4");
 const bcrypt = require("bcrypt");
-const usersDB = {};
+let usersDB = {};
+
 //Adduser to DB
 const addUser = (email, password) => {
   //create arandom user ID
@@ -11,32 +12,31 @@ const addUser = (email, password) => {
     email,
     password
   };
+
   //add new user to the userDB
   usersDB[userID] = newUser;
-
   return userID;
 };
+
 //USER AUTHENTICATION
 const authenticateUser = (email, password) => {
   // Check if the user exist
   const user = findUser(email);
-
   // check if the passwords match
-  console.log("user", user);
-  console.log("password", password);
   if (user && bcrypt.compareSync(password, user.password)) {
     return user;
   } else {
     return false;
   }
 };
+
 //FIND USER
 const findUser = email => {
   return Object.values(usersDB).find(user => user.email === email);
 };
-const getUserByEmail = (email,db)=>{
-    return Object.values(db).find(user => user.email === email).id;
-}
+const getUserByEmail = (email, db) => {
+  return Object.values(db).find(user => user.email === email).id;
+};
 //Database find of user
 
 const filterUser = (userID, database) => {
@@ -49,11 +49,19 @@ const filterUser = (userID, database) => {
   return userLinks;
 };
 
+//create randomString
+const generateRandomString = () => {
+  return Math.random()
+    .toString(36)
+    .substring(7);
+};
+
 module.exports = {
   addUser,
   authenticateUser,
   findUser,
   usersDB,
   filterUser,
-  getUserByEmail
+  getUserByEmail,
+  generateRandomString
 };
